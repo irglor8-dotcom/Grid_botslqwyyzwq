@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Futures Grid Trading Simulator</title>
+    <style>
+        :root {
+            --primary-color: #2962ff;
+            --success-color: #4caf50;
+            --danger-color: #f44336;
+            --warning-color: #ff9800;
+            --light-bg: #f5f5f5;
+            --dark-bg: #121212;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #1e53e5;
+        }
+
+        button.success {
+            background-color: var(--success-color);
+        }
+
+        button.success:hover {
+            background-color: #3d8b40;
+        }
+
+        button.danger {
+            background-color: var(--danger-color);
+        }
+
+        button.danger:hover {
+            background-color: #d32f2f;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .win {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .loss {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        .pending {
+            color: var(--warning-color);
+            font-weight: 600;
+        }
+
+        .balance-display {
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .price-display {
+            font-size: 18px;
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .grid-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .grid-row-header {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-active {
+            background-color: var(--success-color);
+        }
+
+        .status-inactive {
+            background-color: #ccc;
+        }
+
+        .status-waiting {
+            background-color: var(--warning-color);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .symbol-search {
+            position: relative;
+        }
+
+        .symbol-search input {
+            padding-right: 40px;
+        }
+
+        .symbol-search:after {
+            content: "🔍";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+        }
+
+        .symbol-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 5px;
+            background: white;
+            position: absolute;
+            width: 100%;
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .symbol-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .symbol-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .symbol-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Crypto Futures Grid Trading Simulator</h1>
+            <p>Practice grid trading strategies with live Bybit prices and virtual money</p>
+        </header>
+
+        <!-- Initial Setup Section -->
+        <section id="setup-section" class="card">
+            <h2>Initial Setup</h2>
+            <div class="form-group">
+                <label for="paper-balance">Paper Balance (USD)</label>
+                <input type="number" id="paper-balance" value="1000" min="1">
+            </div>
+            <div class="form-group">
+                <label for="symbol">Symbol</label>
+                <div class="symbol-search">
+                    <input type="text" id="symbol" placeholder="Search for a trading pair...">
+                    <div id="symbol-list" class="symbol-list hidden"></div>
+                </div>
+                <div id="loading-symbols" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p>Loading available trading pairs...</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="leverage">Leverage</label>
+                <input type="number" id="leverage" value="1" min="1" max="100">
+            </div>
+            <div class="form-group">
+                <label for="grid-levels">Number of Grid Levels</label>
+                <input type="number" id="grid-levels" value="5" min="1" max="20">
+            </div>
+            <button id="setup-grid-btn">Setup Grid</button>
+        </section>
+
+        <!-- Grid Setup Section -->
+        <section id="grid-section" class="card hidden">
+            <h2>Grid Setup</h2>
+            <div id="grid-container">
+                <!-- Grid rows will be dynamically generated here -->
+            </div>
+            <div class="button-group">
+                <button id="start-simulation-btn" class="success">Start Simulation</button>
+                <button id="back-to-setup-btn">Back to Setup</button>
+            </div>
+        </section>
+
+        <!-- Simulation Section -->
+        <section id="simulation-section" class="card hidden">
+            <h2>Live Simulation</h2>
+            <div class="balance-display">
+                Paper Balance: $<span id="current-balance">1000</span>
+            </div>
+            <div class="price-display">
+                Current <span id="current-symbol">BTCUSDT</span> Price: $<span id="current-price">0</span>
+            </div>
+            <div id="simulation-results">
+                <!-- Results will be displayed here -->
+            </div>
+            <div class="button-group">
+                <button id="reset-simulation-btn" class="danger">Reset Simulation</button>
+                <button id="new-grid-btn">Create New Grid</button>
+            </div>
+        </section>
+
+        <div class="footer">
+            <p>This is a simulation tool only. No real trading is performed.</p>
+            <p>Data provided by Bybit Public API</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let paperBalance = 1000;
+        let currentSymbol = 'BTCUSDT';
+        let leverage = 1;
+        let gridLevels = [];
+        let simulationInterval;
+        let currentPrice = 0;
+        let allSymbols = [];
+
+        // DOM Elements
+        const setupSection = document.getElementById('setup-section');
+        const gridSection = document.getElementById('grid-section');
+        const simulationSection = document.getElementById('simulation-section');
+        const gridContainer = document.getElementById('grid-container');
+        const simulationResults = document.getElementById('simulation-results');
+        const currentBalanceElement = document.getElementById('current-balance');
+        const currentPriceElement = document.getElementById('current-price');
+        const currentSymbolElement = document.getElementById('current-symbol');
+        const symbolInput = document.getElementById('symbol');
+        const symbolList = document.getElementById('symbol-list');
+        const loadingSymbols = document.getElementById('loading-symbols');
+
+        // Event Listeners
+        document.getElementById('setup-grid-btn').addEventListener('click', setupGrid);
+        document.getElementById('back-to-setup-btn').addEventListener('click', backToSetup);
+        document.getElementById('start-simulation-btn').addEventListener('click', startSimulation);
+        document.getElementById('reset-simulation-btn').addEventListener('click', resetSimulation);
+        document.getElementById('new-grid-btn').addEventListener('click', createNewGrid);
+
+        // Symbol search functionality
+        symbolInput.addEventListener('input', handleSymbolSearch);
+        symbolInput.addEventListener('focus', showSymbolList);
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchAllSymbols();
+        });
+
+        // Functions
+        async function fetchAllSymbols() {
+            loadingSymbols.classList.remove('hidden');
+            
+            try {
+                // Fetch all available symbols from Bybit
+                const response = await fetch('https://api.bybit.com/v5/market/tickers?category=linear');
+                const data = await response.json();
+                
+                if (data.retCode === 0 && data.result.list.length > 0) {
+                    // Extract symbols and filter for USDT pairs
+                    allSymbols = data.result.list
+                        .map(item => item.symbol)
+                        .filter(symbol => symbol.endsWith('USDT'))
+                        .sort();
+                    
+                    // Populate the symbol list
+                    renderSymbolList(allSymbols);
+                    
+                    // Set default symbol
+                    if (allSymbols.length > 0) {
+                        symbolInput.value = allSymbols[0];
+                        currentSymbol = allSymbols[0];
+                    }
+                } else {
+                    console.error('Error fetching symbols:', data);
+                    // Fallback to default symbols
+                    allSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT'];
+                    renderSymbolList(allSymbols);
+                }
+            } catch (error) {
+                console.error('Error fetching symbols:', error);
+                // Fallback to default symbols
+                allSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT'];
+                renderSymbolList(allSymbols);
+            } finally {
+                loadingSymbols.classList.add('hidden');
+            }
+        }
+
+        function renderSymbolList(symbols) {
+            symbolList.innerHTML = '';
+            
+            symbols.forEach(symbol => {
+                const symbolItem = document.createElement('div');
+                symbolItem.className = 'symbol-item';
+                symbolItem.textContent = symbol;
+                symbolItem.addEventListener('click', () => {
+                    symbolInput.value = symbol;
+                    currentSymbol = symbol;
+                    symbolList.classList.add('hidden');
+                });
+                symbolList.appendChild(symbolItem);
+            });
+        }
+
+        function handleSymbolSearch() {
+            const searchTerm = symbolInput.value.toUpperCase();
+            const filteredSymbols = allSymbols.filter(symbol => 
+                symbol.includes(searchTerm)
+            );
+            
+            renderSymbolList(filteredSymbols);
+            symbolList.classList.remove('hidden');
+        }
+
+        function showSymbolList() {
+            if (allSymbols.length > 0) {
+                symbolList.classList.remove('hidden');
+            }
+        }
+
+        // Hide symbol list when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!symbolInput.contains(e.target) && !symbolList.contains(e.target)) {
+                symbolList.classList.add('hidden');
+            }
+        });
+
+        function setupGrid() {
+            // Get values from setup form
+            paperBalance = parseFloat(document.getElementById('paper-balance').value);
+            currentSymbol = symbolInput.value;
+            leverage = parseInt(document.getElementById('leverage').value);
+            const numGridLevels = parseInt(document.getElementById('grid-levels').value);
+            
+            // Validate inputs
+            if (isNaN(paperBalance) || paperBalance <= 0) {
+                alert('Please enter a valid paper balance');
+                return;
+            }
+            
+            if (!allSymbols.includes(currentSymbol)) {
+                alert('Please select a valid trading pair from the list');
+                return;
+            }
+            
+            if (isNaN(leverage) || leverage <= 0) {
+                alert('Please enter a valid leverage');
+                return;
+            }
+            
+            if (isNaN(numGridLevels) || numGridLevels <= 0) {
+                alert('Please enter a valid number of grid levels');
+                return;
+            }
+            
+            // Generate grid rows
+            generateGridRows(numGridLevels);
+            
+            // Show grid section, hide setup section
+            setupSection.classList.add('hidden');
+            gridSection.classList.remove('hidden');
+        }
+
+        function generateGridRows(numRows) {
+            gridContainer.innerHTML = '';
+            
+            // Add header
+            const headerRow = document.createElement('div');
+            headerRow.className = 'grid-row grid-row-header';
+            headerRow.innerHTML = `
+                <div>Entry Price</div>
+                <div>Take Profit (%)</div>
+                <div>Stop Loss (%)</div>
+                <div>Position Size (%)</div>
+            `;
+            gridContainer.appendChild(headerRow);
+            
+            // Generate rows
+            for (let i = 0; i < numRows; i++) {
+                const row = document.createElement('div');
+                row.className = 'grid-row';
+                row.innerHTML = `
+                    <div><input type="number" id="entry-price-${i}" placeholder="Entry Price" step="0.0001"></div>
+                    <div><input type="number" id="tp-${i}" value="2" step="0.1" min="0.1">%</div>
+                    <div><input type="number" id="sl-${i}" value="1" step="0.1" min="0.1">%</div>
+                    <div><input type="number" id="size-${i}" value="${Math.floor(100/numRows)}" step="1" min="1" max="100">%</div>
+                `;
+                gridContainer.appendChild(row);
+            }
+        }
+
+        function backToSetup() {
+            gridSection.classList.add('hidden');
+            setupSection.classList.remove('hidden');
+        }
+
+        function startSimulation() {
+            // Collect grid data
+            const numGridLevels = parseInt(document.getElementById('grid-levels').value);
+            gridLevels = [];
+            
+            let totalSize = 0;
+            
+            for (let i = 0; i < numGridLevels; i++) {
+                const entryPrice = parseFloat(document.getElementById(`entry-price-${i}`).value);
+                const tpPercent = parseFloat(document.getElementById(`tp-${i}`).value);
+                const slPercent = parseFloat(document.getElementById(`sl-${i}`).value);
+                const sizePercent = parseFloat(document.getElementById(`size-${i}`).value);
+                
+                // Validate inputs
+                if (isNaN(entryPrice) || entryPrice <= 0) {
+                    alert(`Please enter a valid entry price for grid level ${i+1}`);
+                    return;
+                }
+                
+                if (isNaN(tpPercent) || tpPercent <= 0) {
+                    alert(`Please enter a valid take profit percentage for grid level ${i+1}`);
+                    return;
+                }
+                
+                if (isNaN(slPercent) || slPercent <= 0) {
+                    alert(`Please enter a valid stop loss percentage for grid level ${i+1}`);
+                    return;
+                }
+                
+                if (isNaN(sizePercent) || sizePercent <= 0) {
+                    alert(`Please enter a valid position size for grid level ${i+1}`);
+                    return;
+                }
+                
+                totalSize += sizePercent;
+                
+                // Calculate TP and SL prices
+                const tpPrice = entryPrice * (1 + tpPercent / 100);
+                const slPrice = entryPrice * (1 - slPercent / 100);
+                
+                // Calculate position size in USD
+                const positionSize = (sizePercent / 100) * paperBalance * leverage;
+                
+                gridLevels.push({
+                    entryPrice,
+                    tpPrice,
+                    slPrice,
+                    positionSize,
+                    sizePercent,
+                    status: 'waiting', // waiting, active, win, loss
+                    pnl: 0
+                });
+            }
+            
+            // Check if total size is 100%
+            if (totalSize !== 100) {
+                alert(`Total position size must be 100%. Currently it's ${totalSize}%`);
+                return;
+            }
+            
+            // Update UI
+            currentBalanceElement.textContent = paperBalance.toFixed(2);
+            currentSymbolElement.textContent = currentSymbol;
+            
+            // Show simulation section, hide grid section
+            gridSection.classList.add('hidden');
+            simulationSection.classList.remove('hidden');
+            
+            // Start fetching prices
+            fetchCurrentPrice();
+            simulationInterval = setInterval(fetchCurrentPrice, 3000); // Update every 3 seconds
+            
+            // Display initial grid status
+            updateSimulationResults();
+        }
+
+        function fetchCurrentPrice() {
+            // Using Bybit public API to get ticker data
+            const url = `https://api.bybit.com/v5/market/tickers?category=linear&symbol=${currentSymbol}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.retCode === 0 && data.result.list.length > 0) {
+                        currentPrice = parseFloat(data.result.list[0].lastPrice);
+                        currentPriceElement.textContent = currentPrice.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 6
+                        });
+                        
+                        // Check for TP/SL triggers
+                        checkTriggers();
+                    } else {
+                        console.error('Error fetching price data:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching price:', error);
+                });
+        }
+
+        function checkTriggers() {
+            let updated = false;
+            
+            for (let i = 0; i < gridLevels.length; i++) {
+                const grid = gridLevels[i];
+                
+                if (grid.status === 'waiting' && currentPrice <= grid.entryPrice) {
+                    grid.status = 'active';
+                    updated = true;
+                }
+                
+                if (grid.status === 'active') {
+                    if (currentPrice >= grid.tpPrice) {
+                        // Take Profit triggered
+                        grid.status = 'win';
+                        grid.pnl = grid.positionSize * (grid.tpPrice - grid.entryPrice) / grid.entryPrice;
+                        paperBalance += grid.pnl;
+                        updated = true;
+                    } else if (currentPrice <= grid.slPrice) {
+                        // Stop Loss triggered
+                        grid.status = 'loss';
+                        grid.pnl = grid.positionSize * (grid.slPrice - grid.entryPrice) / grid.entryPrice;
+                        paperBalance += grid.pnl;
+                        updated = true;
+                    }
+                }
+            }
+            
+            if (updated) {
+                currentBalanceElement.textContent = paperBalance.toFixed(2);
+                updateSimulationResults();
+                
+                // Check if all grids are completed
+                const allCompleted = gridLevels.every(grid => grid.status === 'win' || grid.status === 'loss');
+                if (allCompleted) {
+                    clearInterval(simulationInterval);
+                    alert('All grid levels have been completed!');
+                }
+            }
+        }
+
+        function updateSimulationResults() {
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Level</th>
+                            <th>Entry Price</th>
+                            <th>TP Price</th>
+                            <th>SL Price</th>
+                            <th>Position Size</th>
+                            <th>Status</th>
+                            <th>P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            for (let i = 0; i < gridLevels.length; i++) {
+                const grid = gridLevels[i];
+                let statusClass = '';
+                let statusText = '';
+                
+                switch(grid.status) {
+                    case 'waiting':
+                        statusClass = 'pending';
+                        statusText = 'Waiting';
+                        break;
+                    case 'active':
+                        statusClass = 'pending';
+                        statusText = 'Active';
+                        break;
+                    case 'win':
+                        statusClass = 'win';
+                        statusText = 'Win';
+                        break;
+                    case 'loss':
+                        statusClass = 'loss';
+                        statusText = 'Loss';
+                        break;
+                }
+                
+                html += `
+                    <tr>
+                        <td>${i+1}</td>
+                        <td>$${grid.entryPrice.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 6
+                        })}</td>
+                        <td>$${grid.tpPrice.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 6
+                        })}</td>
+                        <td>$${grid.slPrice.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 6
+                        })}</td>
+                        <td>$${grid.positionSize.toFixed(2)}</td>
+                        <td class="${statusClass}">${statusText}</td>
+                        <td class="${statusClass}">$${grid.pnl.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            simulationResults.innerHTML = html;
+        }
+
+        function resetSimulation() {
+            clearInterval(simulationInterval);
+            paperBalance = parseFloat(document.getElementById('paper-balance').value);
+            gridLevels = [];
+            currentPrice = 0;
+            currentPriceElement.textContent = '0';
+            simulationResults.innerHTML = '';
+            simulationSection.classList.add('hidden');
+            setupSection.classList.remove('hidden');
+        }
+
+        function createNewGrid() {
+            clearInterval(simulationInterval);
+            simulationSection.classList.add('hidden');
+            gridSection.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
